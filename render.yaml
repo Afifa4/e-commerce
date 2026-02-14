@@ -1,0 +1,31 @@
+# Render Blueprint: one Web Service that runs backend and serves the frontend
+# Repo: https://github.com/Afifa4/e-commerce
+
+services:
+  - type: web
+    name: e-commerce
+    runtime: node
+    region: oregon
+
+    # Use repo root so we can build both client and server
+    rootDir: .
+
+    # Build: install and build client, then copy to server/public; install server
+    buildCommand: |
+      cd client && npm install && npm run build
+      mkdir -p ../server/public && cp -r dist/* ../server/public/
+      cd ../server && npm install
+
+    # Start the backend (serves API + frontend from server/public)
+    startCommand: cd server && node simple-server.js
+
+    # Env vars – set these in Render Dashboard (Environment)
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: CLIENT_URL
+        generateValue: true
+      - key: PORT
+        value: 3000

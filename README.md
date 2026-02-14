@@ -85,10 +85,32 @@ Route -Description
 ## Build for production
 
 ```bash
-# Frontend
+# 1. Build the frontend first (creates client/dist with index.html and assets/)
 cd client && npm run build
-# Output in client/dist
 
-# Backend: run with
+# 2. Run the backend (in production it will serve client/dist)
 cd server && npm start
 ```
+
+## Deployment: 404 for `/assets/index-xxx.js`
+
+If after deploying you see **Failed to load resource: 404** for a file like `/assets/index-CzYLtchu.js`, the server cannot find the built frontend files.
+
+**When the backend serves the frontend (single deploy, e.g. Render/Railway):**
+
+1. **Build the client before or during deploy**  
+   Your build step must run `cd client && npm run build` so that `client/dist` contains `index.html` and an `assets/` folder with the hashed JS/CSS files.
+
+2. **Where the server looks for files**  
+   The server serves from `client/dist` (relative to the server folder). So your repo on the server must have:
+   - `server/` (with app, routes, etc.)
+   - `client/dist/` (with `index.html` and `assets/`).
+
+   If your deploy runs only from `server/` and never builds or copies the client, set **`CLIENT_DIST_PATH`** in the server env to the **absolute path** of the built frontend (e.g. `/app/client/dist` or wherever the build output is).
+
+3. **Redeploy**  
+   After fixing the build or path, redeploy so the server can serve `/assets/*` and `index.html` from that folder.
+
+**When the frontend is on a subpath (e.g. `https://example.com/my-app/`):**
+
+- Set **`VITE_BASE_PATH=/my-app/`** when building the client (e.g. in your build env or `.env`), then run `npm run build`. Asset URLs will then be `/my-app/assets/...` and will load correctly.
